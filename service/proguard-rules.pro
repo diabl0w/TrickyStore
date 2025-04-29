@@ -32,7 +32,5 @@
 -keep class org.bouncycastle.jce.provider.** { *; }
 -dontwarn javax.naming.**
 
--repackageclasses
 -allowaccessmodification
--overloadaggressively
--renamesourcefileattribute
+-dontobfuscate
