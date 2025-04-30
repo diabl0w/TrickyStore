@@ -27,13 +27,11 @@ fun getBootHashFromProp(): ByteArray? {
 
 fun randomBytes() = ByteArray(32).also { ThreadLocalRandom.current().nextBytes(it) }
 
-val patchLevel by lazy {
-    Build.VERSION.SECURITY_PATCH.convertPatchLevel(false)
+val patchLevelData by lazy {
+    Build.VERSION.SECURITY_PATCH.convertPatchLevel()
 }
-
-val patchLevelLong by lazy {
-    Build.VERSION.SECURITY_PATCH.convertPatchLevel(true)
-}
+val patchLevel by lazy { patchLevelData.first }
+val patchLevelLong by lazy { patchLevelData.second }
 
 // FIXME
 val osVersion by lazy {
@@ -46,17 +44,19 @@ val osVersion by lazy {
     }
 }
 
-fun String.convertPatchLevel(long: Boolean) = kotlin.runCatching {
+fun String.convertPatchLevel() = kotlin.runCatching {
     val l = split("-")
-    if (long) l[0].toInt() * 10000 + l[1].toInt() * 100 + l[2].toInt()
-    else l[0].toInt() * 100 + l[1].toInt()
-}.onFailure { Logger.e("invalid patch level $this !", it) }.getOrDefault(202404)
+    val shortValue = l[0].toInt() * 100 + l[1].toInt()
+    val longValue = l[0].toInt() * 10000L + l[1].toInt() * 100L + l[2].toInt()
+    //Pair(shortValue, longValue)
+    Pair(202408, 20240800L)
+}.onFailure { Logger.e("invalid patch level $this !", it) }.getOrDefault(Pair(202404, 20240400L))
 
 fun IPackageManager.getPackageInfoCompat(name: String, flags: Long, userId: Int) =
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         getPackageInfo(name, flags, userId)
     } else {
-        getPackageInfo(name, flags.toInt(), userId)
+        getPackageInfo(name, flags.toLong(), userId)
     }
 
 fun String.trimLine() = trim().split("\n").joinToString("\n") { it.trim() }

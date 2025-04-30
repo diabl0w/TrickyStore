@@ -129,11 +129,26 @@ class SecurityLevelInterceptor(
         a.keyParameter.value = KeyParameterValue.boolValue(true) // TODO: copy
         a.securityLevel = level
         authorizations.add(a)
+        a = Authorization()
+        a.keyParameter = KeyParameter()
+        a.keyParameter.tag = Tag.OS_PATCHLEVEL
+        a.keyParameter.value = KeyParameterValue.integer(202501)
+        a.securityLevel = level
+        authorizations.add(a)
+        a = Authorization()
+        a.keyParameter = KeyParameter()
+        a.keyParameter.tag = Tag.VENDOR_PATCHLEVEL
+        a.keyParameter.value = KeyParameterValue.integer(20250101)
+        a.securityLevel = level
+        authorizations.add(a)
+        a = Authorization()
+        a.keyParameter = KeyParameter()
+        a.keyParameter.tag = Tag.BOOT_PATCHLEVEL
+        a.keyParameter.value = KeyParameterValue.integer(20250101)
+        a.securityLevel = level
+        authorizations.add(a)
         // TODO: ORIGIN
         //OS_VERSION
-        //OS_PATCHLEVEL
-        //VENDOR_PATCHLEVEL
-        //BOOT_PATCHLEVEL
         //CREATION_DATETIME
         //USER_ID
         metadata.authorizations = authorizations.toTypedArray<Authorization>()

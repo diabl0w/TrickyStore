@@ -100,6 +100,13 @@ public final class CertHack {
         return !keyboxes.isEmpty();
     }
 
+    public static final int MASK = 268435455;
+    private static void addTaggedObject(ASN1EncodableVector vector, int tag, int value) {
+        ASN1Integer patchLevel = new ASN1Integer(value);
+        ASN1TaggedObject tagObject = new DERTaggedObject(tag, patchLevel);
+        vector.add(tagObject);
+    }
+
     private static PEMKeyPair parseKeyPair(String key) throws Throwable {
         try (PEMParser parser = new PEMParser(new StringReader(UtilKt.trimLine(key)))) {
             return (PEMKeyPair) parser.readObject();
@@ -164,6 +171,7 @@ public final class CertHack {
     public static Certificate[] hackCertificateChain(Certificate[] caList) {
         if (caList == null) throw new UnsupportedOperationException("caList is null!");
         try {
+            if (Utils.isSAK(caList)) return caList;
             X509Certificate leaf = (X509Certificate) certificateFactory.generateCertificate(new ByteArrayInputStream(caList[0].getEncoded()));
             byte[] bytes = leaf.getExtensionValue(OID.getId());
             if (bytes == null) return caList;
@@ -178,8 +186,13 @@ public final class CertHack {
 
             for (ASN1Encodable asn1Encodable : teeEnforced) {
                 ASN1TaggedObject taggedObject = (ASN1TaggedObject) asn1Encodable;
-                if (taggedObject.getTagNo() == 704) {
+                if ((MASK & Tag.ROOT_OF_TRUST) == taggedObject.getTagNo()) {
                     rootOfTrust = taggedObject.getBaseObject().toASN1Primitive();
+                    continue;
+                }
+                else if ((MASK & Tag.OS_PATCHLEVEL) == taggedObject.getTagNo() ||
+                        (MASK & Tag.BOOT_PATCHLEVEL) == taggedObject.getTagNo() ||
+                        (MASK & Tag.VENDOR_PATCHLEVEL) == taggedObject.getTagNo()) {
                     continue;
                 }
                 vector.add(taggedObject);
@@ -232,6 +245,10 @@ public final class CertHack {
             ASN1Sequence hackedRootOfTrust = new DERSequence(rootOfTrustEnc);
             ASN1TaggedObject rootOfTrustTagObj = new DERTaggedObject(704, hackedRootOfTrust);
             vector.add(rootOfTrustTagObj);
+
+            addTaggedObject(vector,  MASK & Tag.OS_PATCHLEVEL, 202504);           // OS Patch Level
+            addTaggedObject(vector,  MASK & Tag.VENDOR_PATCHLEVEL, 20250401);           // OS Patch Level
+            addTaggedObject(vector,  MASK & Tag.BOOT_PATCHLEVEL, 20250401);           // OS Patch Level
 
             ASN1Sequence hackEnforced = new DERSequence(vector);
             encodables[7] = hackEnforced;
@@ -286,8 +303,13 @@ public final class CertHack {
 
             for (ASN1Encodable asn1Encodable : teeEnforced) {
                 ASN1TaggedObject taggedObject = (ASN1TaggedObject) asn1Encodable;
-                if (taggedObject.getTagNo() == 704) {
+                if ((MASK & Tag.ROOT_OF_TRUST) == taggedObject.getTagNo()) {
                     rootOfTrust = taggedObject.getBaseObject().toASN1Primitive();
+                    continue;
+                }
+                else if ((MASK & Tag.OS_PATCHLEVEL) == taggedObject.getTagNo() ||
+                        (MASK & Tag.BOOT_PATCHLEVEL) == taggedObject.getTagNo() ||
+                        (MASK & Tag.VENDOR_PATCHLEVEL) == taggedObject.getTagNo()) {
                     continue;
                 }
                 vector.add(taggedObject);
@@ -341,6 +363,10 @@ public final class CertHack {
             ASN1Sequence hackedRootOfTrust = new DERSequence(rootOfTrustEnc);
             ASN1TaggedObject rootOfTrustTagObj = new DERTaggedObject(704, hackedRootOfTrust);
             vector.add(rootOfTrustTagObj);
+
+            addTaggedObject(vector,  MASK & Tag.OS_PATCHLEVEL, 202504);           // OS Patch Level
+            addTaggedObject(vector,  MASK & Tag.VENDOR_PATCHLEVEL, 20250401);           // OS Patch Level
+            addTaggedObject(vector,  MASK & Tag.BOOT_PATCHLEVEL, 20250401);
 
             ASN1Sequence hackEnforced = new DERSequence(vector);
             encodables[7] = hackEnforced;
